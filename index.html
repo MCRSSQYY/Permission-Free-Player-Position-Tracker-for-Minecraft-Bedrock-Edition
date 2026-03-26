@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="zh">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft BE · 二分法坐标探测仪</title>
+  <style>
+		* {
+			box-sizing: border-box;
+			font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+		}
+		body {
+			background: #1a1e26;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 100vh;
+			margin: 20px;
+		}
+		.container {
+			max-width: 800px;
+			width: 100%;
+			background: #2d333b;
+			border-radius: 28px;
+			padding: 24px;
+			box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+			border: 1px solid #4d5562;
+			color: #e6e9ef;
+		}
+		h1 {
+			font-size: 1.8rem;
+			font-weight: 400;
+			margin: 0 0 8px 0;
+			color: #ffd966;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		h1 small {
+			font-size: 0.8rem;
+			color: #8b95a9;
+			font-weight: 300;
+			margin-left: auto;
+		}
+		.input-panel {
+			background: #1e232b;
+			border-radius: 18px;
+			padding: 20px;
+			margin: 16px 0;
+			border: 1px solid #3e4652;
+		}
+		.input-group {
+			display: flex;
+			gap: 16px;
+			flex-wrap: wrap;
+		}
+		.input-field {
+			flex: 1 1 200px;
+		}
+		.input-field label {
+			display: block;
+			font-size: 0.85rem;
+			color: #acb8cc;
+			margin-bottom: 6px;
+			letter-spacing: 0.3px;
+		}
+		.input-field input {
+			width: 100%;
+			background: #0f1319;
+			border: 1px solid #3e4a5a;
+			color: white;
+			padding: 12px 16px;
+			border-radius: 40px;
+			font-size: 1rem;
+			outline: none;
+			transition: 0.15s;
+		}
+		.input-field input:focus {
+			border-color: #ffb347;
+			box-shadow: 0 0 0 2px #ffb34733;
+		}
+		.button-row {
+			display: flex;
+			gap: 12px;
+			margin: 18px 0 12px 0;
+			flex-wrap: wrap;
+			align-items: center;
+		}
+		button {
+			background: #3f4a5a;
+			border: none;
+			color: white;
+			padding: 10px 22px;
+			border-radius: 40px;
+			font-size: 0.95rem;
+			font-weight: 500;
+			cursor: pointer;
+			transition: 0.1s;
+			border: 1px solid #5f6b7e;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+		}
+		button.primary {
+			background: #e9b13f;
+			border-color: #ffcf7a;
+			color: #1a1e26;
+			font-weight: 600;
+		}
+		button.secondary {
+			background: #374151;
+			border-color: #4f5a6b;
+		}
+		button:active {
+			transform: translateY(1px);
+			box-shadow: none;
+		}
+		button:disabled {
+			opacity: 0.4;
+			pointer-events: none;
+		}
+		.status-board {
+			background: #1a1e26;
+			border-radius: 18px;
+			padding: 16px 20px;
+			margin: 20px 0;
+			border-left: 5px solid #f1c40f;
+			box-shadow: inset 0 2px 5px #00000033;
+		}
+		.status-line {
+			font-size: 1.1rem;
+			font-weight: 500;
+			color: #f3d886;
+		}
+		.output-area {
+			background: #0b0e12;
+			border-radius: 14px;
+			padding: 16px 18px;
+			font-family: 'Monaco', 'Menlo', monospace;
+			font-size: 1rem;
+			border: 1px solid #4a5568;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			word-break: break-word;
+		}
+		.output-text {
+			color: #b3e0ff;
+			white-space: pre-wrap;
+			max-width: 85%;
+		}
+		.copy-btn {
+			background: #2f3b4b;
+			border-radius: 30px;
+			padding: 8px 16px;
+			font-size: 0.85rem;
+			border: 1px solid #62738a;
+		}
+		.selection-area {
+			background: #252c35;
+			border-radius: 22px;
+			padding: 18px;
+			margin: 16px 0;
+			border: 1px dashed #6f7a8b;
+		}
+		.selection-title {
+			font-size: 0.95rem;
+			color: #b7c3d6;
+			margin-bottom: 14px;
+		}
+		.choice-buttons {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+		.choice-btn {
+			background: #2e3a48;
+			border: 1px solid #63748b;
+			border-radius: 40px;
+			padding: 8px 20px;
+			font-weight: 500;
+		}
+		.choice-btn.gold { background: #b8860b; color: #fff0c0; border-color: #f5c542; }
+		.choice-btn.red { background: #992d22; color: #ffc4c4; border-color: #c73e3e; }
+		.choice-btn.blue { background: #1f4a7a; color: #b8d9ff; border-color: #3d7bbf; }
+		.choice-btn.purple { background: #6a4c9c; color: #e2ccff; border-color: #9b7fd3; }
+		.history-panel {
+			background: #20252e;
+			border-radius: 18px;
+			padding: 16px;
+			margin-top: 24px;
+			border: 1px solid #515e72;
+		}
+		.history-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 16px;
+		}
+		.history-list {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			max-height: 250px;
+			overflow-y: auto;
+			padding-right: 5px;
+		}
+		.history-item {
+			background: #11161e;
+			border-radius: 14px;
+			padding: 12px 16px;
+			border-left: 4px solid #e9b13f;
+			display: grid;
+			grid-template-columns: 1fr auto;
+			gap: 8px;
+		}
+		.history-item .player-time {
+			font-size: 0.8rem;
+			color: #9aa9bf;
+			grid-column: 1 / -1;
+		}
+		.history-item .coords {
+			font-size: 1.3rem;
+			font-weight: 600;
+			color: #f5d371;
+		}
+		.history-item .nether {
+			font-size: 1rem;
+			color: #be9b5a;
+		}
+		.history-item .remark {
+			font-size: 0.85rem;
+			font-style: italic;
+			color: #7c8aa3;
+			grid-column: 1 / -1;
+		}
+		.modal-note {
+			background: #2a3340;
+			padding: 12px;
+			border-radius: 30px;
+			margin-top: 12px;
+			display: flex;
+			gap: 8px;
+		}
+		.modal-note input {
+			flex: 1;
+			background: #10161e;
+			border: 1px solid #495a70;
+			border-radius: 40px;
+			padding: 10px 15px;
+			color: white;
+		}
+		.hidden {
+			display: none !important;
+		}
+		.flex-between {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.history-toggle {
+			background: transparent;
+			border: 1px solid #607080;
+		}
+	</style>
+ </head>
+ <body>
+  <div class="container" id="app">
+   <h1>⛏️ 坐标二分探测器 <small>Minecraft BE 1.20+</small></h1>
+   <!-- 输入区（始终可见，但开始后可以禁用？） -->
+   <div class="input-panel">
+	<div class="input-group">
+	 <div class="input-field">
+	  <label>🔍 检索范围 RANGE</label> <input type="number" id="rangeInput" value="100" min="1" step="1">
+	 </div>
+	 <div class="input-field">
+	  <label>🧑 玩家名称 PLAYER</label> <input type="text" id="playerInput" value="Steve" placeholder="区分大小写">
+	 </div>
+	</div>
+   </div>
+   <!-- 主要控制按钮 -->
+   <div class="button-row">
+	<button class="primary" id="startBtn">▶ 开始检索</button>
+	<button class="secondary" id="backBtn" disabled>↩ 返回上一步</button>
+	<button class="secondary" id="historyToggleBtn">📋 历史记录</button>
+   </div>
+   <!-- 状态输出栏 -->
+   <div class="status-board" id="statusBoard">
+	<div class="status-line" id="statusText">⚡ 等待开始...</div>
+   </div>
+   <!-- 输出框 + 复制 -->
+   <div class="output-area">
+	<span class="output-text" id="outputCommand">/w @s 指令将显示在此处</span>
+	<button class="copy-btn" id="copyBtn">📋 复制</button>
+   </div>
+   <!-- 结果选择区（动态） -->
+   <div class="selection-area" id="selectionArea">
+	<div class="selection-title" id="selectionTitle">▶ 操作面板</div>
+	<div class="choice-buttons" id="choiceButtons"></div>
+   </div>
+   <!-- 历史记录面板 (默认隐藏) -->
+   <div class="history-panel hidden" id="historyPanel">
+	<div class="history-header">
+	 <span>📜 探测历史</span>
+	 <button class="history-toggle" id="clearHistoryBtn">清除</button>
+	</div>
+	<div class="history-list" id="historyList"></div>
+   </div>
+   <!-- 临时备注浮层 (保存记录时用) -->
+   <div class="modal-note hidden" id="noteModal">
+	<input type="text" id="remarkInput" placeholder="添加备注 (可选)" maxlength="40">
+	<button class="primary" id="confirmSaveBtn">✔ 保存</button>
+	<button class="secondary" id="cancelSaveBtn">✖ 取消</button>
+   </div>
+  </div>
+  <script>
+	(function() {
+		// ---------- 核心变量 ----------
+		let RANGE = 300000;
+		let PLAYER = 'PlayerName';
+		
+		// 状态机：step 0=初始/未开始, 1=维度检测, 2=象限选择, 3=x二分, 4=z二分, 5=完成
+		let step = 0;
+		
+		// 二分变量
+		let X = 1;          // 象限方向 ±1
+		let Z = 1;
+		let SX = 0, SZ = 0; // 起点坐标
+		let DX = 0, DZ = 0; // 偏移 (可正负)
+		let EX = 0, EZ = 0; // 最终坐标
+		
+		// 用于显示范围 M~N (M=SX, N=SX+DX)
+		let currentAxis = 'x'; // 'x' 或 'z'
+		
+		// 历史记录数组 (保存到localStorage)
+		let historyRecords = [];
+		
+		// 用于返回上一帧的简单堆栈 (只保存必要数据)
+		let historyStack = [];
+
+		// DOM 元素
+		const rangeInp = document.getElementById('rangeInput');
+		const playerInp = document.getElementById('playerInput');
+		const startBtn = document.getElementById('startBtn');
+		const backBtn = document.getElementById('backBtn');
+		const historyToggleBtn = document.getElementById('historyToggleBtn');
+		const statusText = document.getElementById('statusText');
+		const outputCommand = document.getElementById('outputCommand');
+		const copyBtn = document.getElementById('copyBtn');
+		const selectionArea = document.getElementById('selectionArea');
+		const selectionTitle = document.getElementById('selectionTitle');
+		const choiceButtons = document.getElementById('choiceButtons');
+		const historyPanel = document.getElementById('historyPanel');
+		const historyList = document.getElementById('historyList');
+		const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+		const noteModal = document.getElementById('noteModal');
+		const remarkInput = document.getElementById('remarkInput');
+		const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+		const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+
+		// 初始化加载历史
+		loadHistory();
+
+		// ---------- 工具函数 ----------
+		function saveStateToStack() {
+			// 保存当前步骤所有变量，用于返回
+			historyStack.push({
+				step, RANGE, PLAYER, X, Z, SX, SZ, DX, DZ, EX, EZ, currentAxis
+			});
+		}
+
+		function restoreFromStack() {
+			if (historyStack.length === 0) return false;
+			const state = historyStack.pop();
+			step = state.step;
+			RANGE = state.RANGE;
+			PLAYER = state.PLAYER;
+			X = state.X;
+			Z = state.Z;
+			SX = state.SX;
+			SZ = state.SZ;
+			DX = state.DX;
+			DZ = state.DZ;
+			EX = state.EX;
+			EZ = state.EZ;
+			currentAxis = state.currentAxis;
+			return true;
+		}
+
+		// 向远离零取整 (符合题目: 1.2→2, -3.1→-4)
+		function halfAwayFromZero(val) {
+			if (val > 0) return Math.ceil(val / 2);
+			else if (val < 0) return Math.floor(val / 2);
+			return 0;
+		}
+
+		// 取整后的dx (用于二分迭代)
+		function halved(dx) {
+			return halfAwayFromZero(dx);
+		}
+
+		// 更新界面
+		function renderUI() {
+			// 更新输入框值 (但step>0时锁定)
+			rangeInp.value = RANGE;
+			playerInp.value = PLAYER;
+			
+			// 按钮状态
+			if (step === 0) {
+				startBtn.disabled = false;
+				backBtn.disabled = true;
+			} else {
+				startBtn.disabled = true;
+				backBtn.disabled = false;
+			}
+			
+			// 根据step渲染不同的选择区
+			if (step === 0) {
+				statusText.innerText = '⚡ 未开始，输入范围与玩家名称';
+				outputCommand.innerText = '/w @s 等待开始';
+				selectionTitle.innerText = '▶ 无操作';
+				choiceButtons.innerHTML = '';
+			} else if (step === 1) {
+				statusText.innerText = `🔍 当前检索范围: 0 ~ ${RANGE} (检测维度)`;
+				outputCommand.innerText = `/w @s @a[rm=0,name="${PLAYER}"]`;
+				selectionTitle.innerText = '⚡ 请确认命令是否有效';
+				choiceButtons.innerHTML = `
+					<button class="choice-btn primary" id="dimensionValid">✅ 命令有效 (同一维度)</button>
+					<button class="choice-btn secondary" id="dimensionInvalid">❌ 命令无效 (不同维度)</button>
+				`;
+				attachListeners();
+			} else if (step === 2) {
+				statusText.innerText = `🧭 判断象限  范围: ${RANGE}`;
+				// 输出复杂指令 (包含颜色代码 § 保留)
+				outputCommand.innerText = `/w @s §6X+Z+:@a[x=1,y=-100,dy=500,z=1,dx=${RANGE},dz=${RANGE}] §cX+Z-:@a[x=1,y=-100,dy=500,z=-1,dx=${RANGE},dz=-${RANGE}] §9X-Z-:@a[x=-1,y=-100,dy=500,z=-1,dx=-${RANGE},dz=-${RANGE}] §dX-Z+:@a[x=-1,y=-100,dy=500,z=1,dx=-${RANGE},dz=${RANGE}]`;
+				selectionTitle.innerText = `👆 选择 "${PLAYER}" 出现的区域`;
+				choiceButtons.innerHTML = `
+					<button class="choice-btn gold" id="quadPp">✨ X+ Z+ (金色)</button>
+					<button class="choice-btn red" id="quadPm">🔥 X+ Z- (红色)</button>
+					<button class="choice-btn purple" id="quadMp">🪻 X- Z+ (紫色)</button>
+					<button class="choice-btn blue" id="quadMm">💧 X- Z- (蓝色)</button>
+					<button class="choice-btn secondary" id="quadNone">🚫 所有区域均未出现</button>
+				`;
+				attachListeners();
+			} else if (step === 3) {
+				// x二分
+				let M = SX;
+				let N = SX + DX;
+				let rangeShow = (M <= N) ? `${M} ~ ${N}` : `${N} ~ ${M}`;
+				statusText.innerText = `📐 判断x坐标 范围: ${rangeShow}`;
+				outputCommand.innerText = `/w @s @a[name="${PLAYER}",x=${SX},z=${SZ},y=-40,dx=${DX},dz=${DZ},dy=500]`;
+				selectionTitle.innerText = `🎯 x轴二分 当前dx=${DX}`;
+				choiceButtons.innerHTML = `
+					<button class="choice-btn primary" id="xValid">✅ 命令有效 (玩家在区间内)</button>
+					<button class="choice-btn secondary" id="xInvalid">❌ 命令无效 (玩家不在区间)</button>
+				`;
+				attachListeners();
+			} else if (step === 4) {
+				// z二分
+				let M = SZ;
+				let N = SZ + DZ;
+				let rangeShow = (M <= N) ? `${M} ~ ${N}` : `${N} ~ ${M}`;
+				statusText.innerText = `📐 判断z坐标 范围: ${rangeShow}`;
+				outputCommand.innerText = `/w @s @a[name="${PLAYER}",x=${SX},z=${SZ},y=-40,dx=${DX},dz=${DZ},dy=500]`;
+				selectionTitle.innerText = `🎯 z轴二分 当前dz=${DZ}`;
+				choiceButtons.innerHTML = `
+					<button class="choice-btn primary" id="zValid">✅ 命令有效 (玩家在区间内)</button>
+					<button class="choice-btn secondary" id="zInvalid">❌ 命令无效 (玩家不在区间)</button>
+				`;
+				attachListeners();
+			} else if (step === 5) {
+				// 完成
+				let mainX = EX;
+				let mainZ = EZ;
+				let netherX = Math.round(EX / 8);
+				let netherZ = Math.round(EZ / 8);
+				statusText.innerText = `✅ 探测已完成  玩家 ${PLAYER}`;
+				outputCommand.innerText = `主世界: ${mainX}, ${mainZ}   下界: ${netherX}, ${netherZ}`;
+				selectionTitle.innerText = `📌 最终坐标 & 保存记录`;
+				choiceButtons.innerHTML = `
+					<div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap;">
+						<div><span style="color:#b0c4de;">🌍主世界</span> <span style="font-size:1.7rem;color:#f5d371;">${mainX} , ${mainZ}</span></div>
+						<div><span style="color:#b0c4de;">🔥下界</span> <span style="font-size:1.4rem;color:#ce9178;">${netherX} , ${netherZ}</span></div>
+						<button class="choice-btn primary" id="saveRecordBtn">💾 保存记录</button>
+					</div>
+				`;
+				attachListeners();
+			}
+
+			// 复制功能
+			//copyBtn.onclick = () => {
+			//	navigator.clipboard.writeText(outputCommand.innerText);
+			//	alert('已复制到剪贴板');
+			//};
+			copyBtn.onclick = () => {
+	const text = outputCommand.innerText;
+	if (navigator.clipboard && window.isSecureContext) {
+		navigator.clipboard.writeText(text).then(() => alert('已复制'));
+	} else {
+		// 降级方案
+		const textarea = document.createElement('textarea');
+		textarea.value = text;
+		document.body.appendChild(textarea);
+		textarea.select();
+		document.execCommand('copy');
+		document.body.removeChild(textarea);
+		alert('已复制 (降级模式)');
+	}
+};
+		}
+
+		// 绑定动态按钮事件 (每次重绘后调用)
+		function attachListeners() {
+			// step1
+			const dimValid = document.getElementById('dimensionValid');
+			if (dimValid) dimValid.onclick = () => { saveStateToStack(); step = 2; renderUI(); };
+
+			const dimInvalid = document.getElementById('dimensionInvalid');
+			if (dimInvalid) dimInvalid.onclick = () => { 
+				saveStateToStack(); 
+				statusText.innerText = `❌ 与 ${PLAYER} 不在同一维度中`;
+				outputCommand.innerText = `搜索结束: 维度不符`;
+				step = 0; startBtn.disabled = false; backBtn.disabled = true; 
+				choiceButtons.innerHTML = ''; 
+				selectionTitle.innerText = '⛔ 探测终止';
+				renderUI();
+			};
+
+			// step2 象限
+			const quadPp = document.getElementById('quadPp');
+			if (quadPp) quadPp.onclick = () => { setQuadrant(1, 1); };
+			const quadPm = document.getElementById('quadPm');
+			if (quadPm) quadPm.onclick = () => { setQuadrant(1, -1); };
+			const quadMp = document.getElementById('quadMp');
+			if (quadMp) quadMp.onclick = () => { setQuadrant(-1, 1); };
+			const quadMm = document.getElementById('quadMm');
+			if (quadMm) quadMm.onclick = () => { setQuadrant(-1, -1); };
+			const quadNone = document.getElementById('quadNone');
+			if (quadNone) quadNone.onclick = () => {
+				saveStateToStack();
+				statusText.innerText = `❌ 与 ${PLAYER} 不在同一维度或超出范围${RANGE}`;
+				outputCommand.innerText = `玩家未在选定象限出现`;
+				step = 0; startBtn.disabled = false; backBtn.disabled = true;
+				choiceButtons.innerHTML = '';
+				selectionTitle.innerText = '⛔ 探测终止';
+				renderUI();
+			};
+
+			// step3 x 有效/无效
+			const xValid = document.getElementById('xValid');
+			if (xValid) xValid.onclick = () => { handleXValid(); };
+			const xInvalid = document.getElementById('xInvalid');
+			if (xInvalid) xInvalid.onclick = () => { handleXInvalid(); };
+
+			// step4 z 有效/无效
+			const zValid = document.getElementById('zValid');
+			if (zValid) zValid.onclick = () => { handleZValid(); };
+			const zInvalid = document.getElementById('zInvalid');
+			if (zInvalid) zInvalid.onclick = () => { handleZInvalid(); };
+
+			// step5 保存记录
+			const saveBtn = document.getElementById('saveRecordBtn');
+			if (saveBtn) saveBtn.onclick = () => {
+				noteModal.classList.remove('hidden');
+			};
+		}
+
+		// 象限选择处理
+		function setQuadrant(x, z) {
+			saveStateToStack();
+			X = x; Z = z;
+			SX = 0; SZ = 0;
+			DX = RANGE * X;
+			DZ = RANGE * Z;
+			// 进入x二分循环 (step3)
+			step = 3;
+			renderUI();
+		}
+
+		// x有效
+		function handleXValid() {
+			saveStateToStack();
+			// 有效：保持SX不变，DX减半
+			if (Math.abs(DX) > 1) {
+				DX = halved(DX);
+				step = 3; // 继续x
+			} else {
+				// DX绝对值<=1, 记录EX并转入z
+				EX = SX;   // 最终x坐标
+				SX = 0;
+				DX = RANGE * X;   // 重置DX为初始方向
+				step = 4; // 进入z
+			}
+			renderUI();
+		}
+
+		// x无效
+		function handleXInvalid() {
+			saveStateToStack();
+			// 无效: 玩家不在 [SX, SX+DX] 内，则起点移动到 SX+DX，DX减半
+			// 注意DX符号：SX = SX + DX
+			SX = SX + DX;
+			if (Math.abs(DX) > 1) {
+				DX = halved(DX);
+				step = 3;
+			} else {
+				EX = SX;   // 最终x (当|DX|<=1，但无效时起点移动后即为终点)
+				SX = 0;
+				DX = RANGE * X;
+				step = 4;
+			}
+			renderUI();
+		}
+
+		// z有效
+		function handleZValid() {
+			saveStateToStack();
+			if (Math.abs(DZ) > 1) {
+				DZ = halved(DZ);
+				step = 4;
+			} else {
+				EZ = SZ;
+				step = 5; // 完成
+			}
+			renderUI();
+		}
+
+		// z无效
+		function handleZInvalid() {
+			saveStateToStack();
+			SZ = SZ + DZ;
+			if (Math.abs(DZ) > 1) {
+				DZ = halved(DZ);
+				step = 4;
+			} else {
+				EZ = SZ;
+				step = 5;
+			}
+			renderUI();
+		}
+
+		// 开始检索
+		startBtn.addEventListener('click', () => {
+			// 读取输入
+			RANGE = parseInt(rangeInp.value, 10);
+			if (isNaN(RANGE) || RANGE < 1) RANGE = 100;
+			PLAYER = playerInp.value.trim() || 'Steve';
+			
+			// 清空堆栈
+			historyStack = [];
+			saveStateToStack(); // 保存初始状态0
+			step = 1;
+			renderUI();
+		});
+
+		// 返回上一步
+		backBtn.addEventListener('click', () => {
+			if (historyStack.length > 0) {
+				restoreFromStack();
+				renderUI();
+			} else {
+				alert('没有更早的步骤');
+			}
+		});
+
+		// 历史记录展开/收起
+		historyToggleBtn.addEventListener('click', () => {
+			historyPanel.classList.toggle('hidden');
+			renderHistoryList();
+		});
+
+		// 保存记录确认
+		confirmSaveBtn.addEventListener('click', () => {
+			let remark = remarkInput.value.trim() || '无备注';
+			let record = {
+				player: PLAYER,
+				time: new Date().toLocaleString(),
+				mainX: EX,
+				mainZ: EZ,
+				netherX: Math.round(EX/8),
+				netherZ: Math.round(EZ/8),
+				remark: remark
+			};
+			historyRecords.unshift(record); // 最新在上
+			localStorage.setItem('mc_coord_history', JSON.stringify(historyRecords));
+			renderHistoryList();
+			noteModal.classList.add('hidden');
+			remarkInput.value = '';
+		});
+
+		cancelSaveBtn.addEventListener('click', () => {
+			noteModal.classList.add('hidden');
+			remarkInput.value = '';
+		});
+
+		clearHistoryBtn.addEventListener('click', () => {
+			if (confirm('清除所有历史记录？')) {
+				historyRecords = [];
+				localStorage.removeItem('mc_coord_history');
+				renderHistoryList();
+			}
+		});
+
+		function loadHistory() {
+			let stored = localStorage.getItem('mc_coord_history');
+			if (stored) {
+				try { historyRecords = JSON.parse(stored); } catch { historyRecords = []; }
+			} else historyRecords = [];
+			renderHistoryList();
+		}
+
+		function renderHistoryList() {
+			if (!historyList) return;
+			if (historyRecords.length === 0) {
+				historyList.innerHTML = '<div style="color:#6f7c93; text-align:center;">暂无探测记录</div>';
+				return;
+			}
+			let html = '';
+			historyRecords.forEach(r => {
+				html += `<div class="history-item">
+					<div class="player-time">${r.player || '?'}  ·  ${r.time}</div>
+					<div class="coords">🌍 ${r.mainX} ${r.mainZ}</div>
+					<div class="nether">🔥 ${r.netherX} ${r.netherZ}</div>
+					<div class="remark">“${r.remark}”</div>
+				</div>`;
+			});
+			historyList.innerHTML = html;
+		}
+
+		// 初始渲染
+		renderUI();
+	})();
+</script>
+ </body>
+</html>
