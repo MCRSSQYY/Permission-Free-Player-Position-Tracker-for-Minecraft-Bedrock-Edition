@@ -449,7 +449,7 @@
 				let N = SX + DX;
 				let rangeShow = (M <= N) ? `${M} ~ ${N}` : `${N} ~ ${M}`;
 				statusText.innerText = `📐 判断x坐标 范围: ${rangeShow}`;
-				outputCommand.innerText = `/w @s @a[name="${PLAYER}",x=${SX},z=${SZ},y=-40,dx=${DX},dz=${DZ},dy=500]`;
+				outputCommand.innerText = `/w @s @a[name="${PLAYER}",x=${SX},z=${SZ},y=-100,dx=${DX},dz=${DZ},dy=500]`;
 				selectionTitle.innerText = `🎯 x轴二分 当前dx=${DX}`;
 				choiceButtons.innerHTML = `
 					<button class="choice-btn primary" id="xValid">✅ 命令有效 (玩家在区间内)</button>
@@ -462,7 +462,7 @@
 				let N = SZ + DZ;
 				let rangeShow = (M <= N) ? `${M} ~ ${N}` : `${N} ~ ${M}`;
 				statusText.innerText = `📐 判断z坐标 范围: ${rangeShow}`;
-				outputCommand.innerText = `/w @s @a[name="${PLAYER}",x=${SX},z=${SZ},y=-40,dx=${DX},dz=${DZ},dy=500]`;
+				outputCommand.innerText = `/w @s @a[name="${PLAYER}",x=${SX},z=${SZ},y=-100,dx=${DX},dz=${DZ},dy=500]`;
 				selectionTitle.innerText = `🎯 z轴二分 当前dz=${DZ}`;
 				choiceButtons.innerHTML = `
 					<button class="choice-btn primary" id="zValid">✅ 命令有效 (玩家在区间内)</button>
